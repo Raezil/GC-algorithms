@@ -1,4 +1,4 @@
-# mark-sweep
+# GC summary
 
 ```
 Mark sweep algorithm.
