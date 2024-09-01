@@ -10,15 +10,3 @@ Sweep phase:
 - heap is graph object.
 ```
 
-```
-  Three color marking starts initially gray root object.
-  GC explores gray objects, turning them black
-  All white objects referenced by gray objects are turned gray, meaning they will be explored in the future
-
-  This continues until there are no more gray objects.
-  All objects initially are white on the heap.
-
-  After all reachable objects have been marked black, the remaining white objects are considered
-  unreachable and can be safely deallocated.
-```
-
