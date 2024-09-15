@@ -10,9 +10,6 @@ type Object struct {
 	references []*Object
 }
 
-var heap []*Object
-var roots []*Object
-
 func NewObject(id int) *Object {
 	return &Object{
 		id:         id,
@@ -24,25 +21,38 @@ func NewObject(id int) *Object {
 func (o *Object) AddReference(obj *Object) {
 	o.references = append(o.references, obj)
 }
-func marking(obj *Object) {
-	obj.marked = true
-	for _, ref := range obj.references {
-		mark(ref)
+
+type GC struct {
+	heap  []*Object
+	roots []*Object
+}
+
+func NewGC() *GC {
+	return &GC{
+		heap:  []*Object{},
+		roots: []*Object{},
 	}
 }
-func mark(obj *Object) {
+
+func (gc *GC) marking(obj *Object) {
+	obj.marked = true
+	for _, ref := range obj.references {
+		gc.Mark(ref)
+	}
+}
+func (gc *GC) Mark(obj *Object) {
 	if obj == nil || obj.marked {
 		return
 	}
-	marking(obj)
+	gc.marking(obj)
 }
 
-func sweep() {
-	for i := 0; i < len(heap); i++ {
-		obj := heap[i]
+func (gc *GC) Sweep() {
+	for i := 0; i < len(gc.heap); i++ {
+		obj := gc.heap[i]
 		if !obj.marked {
 			fmt.Printf("Object %d is unreachable and will be collected.\n", obj.id)
-			heap = append(heap[:i], heap[i+1:]...)
+			gc.heap = append(gc.heap[:i], gc.heap[i+1:]...)
 			i--
 		} else {
 			obj.marked = false
@@ -50,14 +60,15 @@ func sweep() {
 	}
 }
 
-func markSweep() {
-	for _, root := range roots {
-		mark(root)
+func (gc *GC) MarkSweep() {
+	for _, root := range gc.roots {
+		gc.Mark(root)
 	}
-	sweep()
+	gc.Sweep()
 }
 
 func main() {
+	gc := NewGC()
 	// Create objects
 	obj1 := NewObject(1)
 	obj2 := NewObject(2)
@@ -70,21 +81,21 @@ func main() {
 	// obj4 is unreachable, so it should be collected
 
 	// Set up root objects
-	roots = []*Object{obj1}
+	gc.roots = []*Object{obj1}
 
 	// Add all objects to the heap
-	heap = []*Object{obj1, obj2, obj3, obj4}
+	gc.heap = []*Object{obj1, obj2, obj3, obj4}
 
 	fmt.Println("Before garbage collection:")
-	for _, obj := range heap {
+	for _, obj := range gc.heap {
 		fmt.Printf("Object %d\n", obj.id)
 	}
 
 	// Run garbage collector
-	markSweep()
+	gc.MarkSweep()
 
 	fmt.Println("\nAfter garbage collection:")
-	for _, obj := range heap {
+	for _, obj := range gc.heap {
 		fmt.Printf("Object %d\n", obj.id)
 	}
 }
